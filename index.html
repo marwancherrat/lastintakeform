@@ -26,7 +26,11 @@
   .topbar{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--stroke);box-shadow:0 2px 12px rgba(16,24,40,.04)}
   .topbar-inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
   .brand-left{display:flex;align-items:center;gap:10px}
-  .brand-left img.logo{height:22px;width:auto;display:block}
+  .brand-left img.logo{
+    height:26px;width:auto;display:block;
+    /* If the logo is white-on-transparent, this keeps it visible on white */
+    filter: drop-shadow(0 0 1px rgba(0,0,0,.35));
+  }
   .tagline{font-size:12px;color:var(--muted)}
   .shimmer{height:2px;background:linear-gradient(90deg,transparent,var(--lav2),transparent);background-size:200% 100%;animation:shine 3s linear infinite}
   @keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -111,8 +115,8 @@
   <div class="topbar">
     <div class="topbar-inner">
       <div class="brand-left">
-        <!-- Swap the src to change logo, e.g., src="inyo-logo-new.png" -->
-        <img class="logo" src="inyo-logo.png" alt="Inyo" />
+        <!-- NEW LOGO -->
+        <img class="logo" src="Transparent.png?v=1" alt="Inyo" />
         <span class="tagline">Payments • Compliance • Global Payouts</span>
       </div>
     </div>
@@ -156,18 +160,18 @@
           </div>
         </section>
 
-        <!-- STEP 2: Products (two big panes) -->
+        <!-- STEP 2: Products (two big panes with per-product comments) -->
         <section id="step2" class="hidden">
           <header>
             <h1>Select Products</h1>
-            <p>Pick any **Pay-In** and **Payout** methods. Add a note under each product if you want to clarify, include, or exclude something.</p>
+            <p>Pick any <b>Pay-In</b> and <b>Payout</b> methods. Add a note under each product if you want to clarify, include, or exclude something.</p>
           </header>
 
           <div class="panes">
             <!-- Pay-In -->
             <div class="pane">
               <h3>Pay-In Methods</h3>
-              <!-- Each product -->
+
               <div class="product">
                 <input type="checkbox" name="products" value="Regulated/Unregulated Debit Cards" id="pi-debit">
                 <div class="p-meta">
@@ -458,10 +462,10 @@
           </div>
         </section>
 
-        <!-- STEP 4: (opens modal) -->
+        <!-- STEP 4 placeholder (we use a modal) -->
         <section id="step4" class="hidden"></section>
 
-        <!-- Hidden meta (filled at send time) -->
+        <!-- Hidden meta -->
         <input type="hidden" name="_subject" value="New Inyo Intake" />
         <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" />
       </form>
@@ -533,10 +537,9 @@
 
   /* -------- Product comment toggles -------- */
   document.querySelectorAll('.product input[type="checkbox"]').forEach(cb=>{
-    const cbox = cb;
     const block = document.querySelector(`.p-comment[data-for="${cb.id}"]`);
     if(!block) return;
-    const update = ()=> block.classList.toggle('hidden', !cbox.checked);
+    const update = ()=> block.classList.toggle('hidden', !cb.checked);
     cb.addEventListener('change', update);
     update();
   });
@@ -573,9 +576,9 @@
     const prod = selectedProducts();
     const productDetails = prod.map(v=>{
       const id = document.querySelector(`input[name="products"][value="${v}"]`).id;
-      const commentEl = document.getElementById(`comment_${id}`);
-      const value = commentEl ? commentEl.value.trim() : (document.querySelector(`[name="comment_${id}"]`)?.value.trim() || '');
-      return commentEl ? `${v} — ${value || 'no comments'}` : v;
+      const commentEl = document.getElementById(`comment_${id}`) || document.querySelector(`[name="comment_${id}"]`);
+      const note = commentEl ? commentEl.value.trim() : '';
+      return note ? `${v} — ${note}` : v;
     });
 
     return {
@@ -615,14 +618,14 @@
     reviewBackdrop.style.display = 'flex';
   }
 
-  btnEdit.addEventListener('click', ()=>{ reviewBackdrop.style.display='none'; });
+  document.getElementById('btnEdit').addEventListener('click', ()=>{ reviewBackdrop.style.display='none'; });
 
-  /* -------- Confirm & Send -------- */
-  btnConfirm.addEventListener('click', async ()=>{
+  /* -------- Confirm & Send (Formspree) -------- */
+  document.getElementById('btnConfirm').addEventListener('click', async ()=>{
     const endpoint = "https://formspree.io/f/mzzjjppa";
 
     const fd = new FormData(form);
-    // Include explicit list of product comments (only for checked ones)
+    // Include per-product comments for checked items
     document.querySelectorAll('.product input[type="checkbox"]').forEach(cb=>{
       const id = cb.id;
       const commentEl = document.getElementById(`comment_${id}`) || document.querySelector(`[name="comment_${id}"]`);
@@ -640,7 +643,7 @@
       wizardCard.style.display='none';
       const data = buildData();
       renderSummary(thankYouSummary, data);
-      document.getElementById('thankYou').style.display='block';
+      thankYou.style.display='block';
 
       if(!res.ok){
         const p = document.createElement('p');
