@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Inyo – Product Intake</title>
+<style>
+  /* Light theme + Inyo lavender accents */
+  :root{
+    --bg:#ffffff;
+    --card:#ffffff;
+    --stroke:#e7e9f2;
+    --text:#111318;
+    --muted:#667085;
+    --lav:#6f66ff;    /* primary lavender */
+    --lav2:#b9b4ff;   /* soft lavender */
+    --focus:rgba(111,102,255,.25);
+    --success:#0a7f4a;
+    --danger:#d92d20;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;color:var(--text)}
+  a{color:var(--lav);text-decoration:none}
+
+  /* Sticky header with subtle shimmer "bling" */
+  .topbar{
+    position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--stroke);
+    box-shadow:0 2px 12px rgba(16,24,40,.04);
+  }
+  .topbar-inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+  .brand-left{display:flex;align-items:center;gap:10px}
+  .brand-left img.logo{height:22px;width:auto;display:block}
+  .tagline{font-size:12px;color:var(--muted)}
+  .shimmer{
+    height:2px;background:linear-gradient(90deg,transparent, var(--lav2), transparent);
+    background-size:200% 100%;animation:shine 3s linear infinite
+  }
+  @keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  .wrap{max-width:940px;margin:32px auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--stroke);border-radius:16px;box-shadow:0 8px 24px rgba(16,24,40,.06);overflow:hidden}
+  header{padding:22px 22px 4px}
+  h1{margin:0;font-size:22px}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+
+  form{padding:18px 22px 22px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:820px){.row{grid-template-columns:1fr}}
+
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+  input[type="text"], input[type="email"], textarea{
+    width:100%;padding:12px;border-radius:12px;border:1px solid var(--stroke);background:#fff;color:var(--text);outline:none
+  }
+  input:focus, textarea:focus{border-color:var(--lav);box-shadow:0 0 0 4px var(--focus)}
+  textarea{min-height:88px;resize:vertical}
+
+  /* Tabs (Pay-In / Payout) */
+  .tabs{margin-top:14px;border:1px solid var(--stroke);border-radius:14px;background:#fff}
+  .tabbar{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--stroke);background:#fafaff}
+  .tabbar button{
+    appearance:none;border:1px solid var(--stroke);background:#fff;color:var(--text);
+    padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px
+  }
+  .tabbar button.active{background:linear-gradient(90deg,var(--lav),var(--lav2));color:#fff;border-color:transparent}
+  .tabpanel{display:none;padding:14px}
+  .tabpanel.active{display:block}
+
+  /* Product rows with 1-line explainers */
+  .product{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:8px 0;border:1px solid var(--stroke);border-radius:12px;background:#fff}
+  .product input{margin-top:3px;accent-color:var(--lav)}
+  .p-meta{flex:1}
+  .p-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .p-title span{font-size:14px;font-weight:600}
+  details{margin-top:6px}
+  details summary{cursor:pointer;list-style:none;color:var(--muted);font-size:12px}
+  details summary::-webkit-details-marker{display:none}
+  details[open] summary{color:var(--lav)}
+  .divider{height:1px;background:var(--stroke);margin:18px 0}
+
+  /* Actions & messages */
+  .actions{display:flex;align-items:center;gap:10px;margin-top:18px}
+  button{border:0;border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:700}
+  .primary{background:linear-gradient(90deg,var(--lav),var(--lav2));color:#fff}
+  .ghost{background:#fff;border:1px solid var(--stroke);color:var(--text)}
+  .error{color:var(--danger);font-size:13px;margin-top:8px;display:none}
+
+  footer{padding:12px 22px;color:#98a2b3;font-size:12px;text-align:center;border-top:1px solid var(--stroke);background:#fafafa}
+
+  /* --- Review Modal --- */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(17,19,24,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:2000
+  }
+  .modal{max-width:760px;width:100%;background:#fff;border-radius:16px;border:1px solid var(--stroke);box-shadow:0 12px 40px rgba(16,24,40,.18);overflow:hidden}
+  .modal header{padding:16px 18px;border-bottom:1px solid var(--stroke)}
+  .modal .content{padding:16px 18px}
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:720px){.summary-grid{grid-template-columns:1fr}}
+  .summary-item{border:1px solid var(--stroke);border-radius:12px;padding:10px;background:#fff}
+  .summary-item b{display:block;margin-bottom:6px;color:#344054}
+  .modal .actions{padding:14px 18px;border-top:1px solid var(--stroke);display:flex;justify-content:flex-end}
+
+  /* --- Thank You Screen --- */
+  .thankyou{display:none;max-width:940px;margin:28px auto;padding:16px}
+  .ty-card{background:#fff;border:1px solid var(--stroke);border-radius:16px;box-shadow:0 8px 24px rgba(16,24,40,.06);padding:22px}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eff1ff;color:#2f2b88;font-weight:700;font-size:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+  <!-- Sticky header -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-left">
+        <img class="logo" src="inyo-logo.png" alt="Inyo" />
+        <span class="tagline">Payments • Compliance • Global Payouts</span>
+      </div>
+    </div>
+    <div class="shimmer" aria-hidden="true"></div>
+  </div>
+
+  <div class="wrap" id="app">
+    <div class="card" id="formCard">
+      <header>
+        <h1>Inyo – Product Intake</h1>
+        <p>Select what you need, add your details, then **Review & Confirm** before sending.</p>
+      </header>
+
+      <form id="intakeForm">
+        <!-- identity -->
+        <div class="row">
+          <div>
+            <label for="company">Legal Company / Personal Name *</label>
+            <input id="company" name="company" type="text" placeholder="e.g., Atlas Fintech Inc." required />
+          </div>
+          <div>
+            <label for="email">Email (optional)</label>
+            <input id="email" name="email" type="email" placeholder="name@example.com" />
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="tabs">
+          <div class="tabbar">
+            <button type="button" class="active" data-tab="payin">Pay-In Methods</button>
+            <button type="button" data-tab="payout">Payout Methods</button>
+          </div>
+
+          <!-- Pay-In -->
+          <div class="tabpanel active" id="panel-payin" role="region" aria-label="Pay-In Methods">
+            <div class="product">
+              <input type="checkbox" name="products" value="Regulated/Unregulated Debit Cards" id="p-debit-in">
+              <div class="p-meta">
+                <div class="p-title"><label for="p-debit-in"><span>Regulated / Unregulated Debit Cards</span></label></div>
+                <details><summary>What is this?</summary><small>Bank-linked (regulated) or program (unregulated) cards to fund accounts quickly.</small></details>
+              </div>
+            </div>
+            <div class="product">
+              <input type="checkbox" name="products" value="Mastercard Move" id="p-move">
+              <div class="p-meta"><div class="p-title"><label for="p-move"><span>Mastercard Move</span></label></div>
+                <details><summary>What is this?</summary><small>Real-time transfers to cards, bank accounts, or wallets via Mastercard rails.</small></details>
+              </div>
+            </div>
+            <div class="product">
+              <input type="checkbox" name="products" value="AFT" id="p-aft">
+              <div class="p-meta"><div class="p-title"><label for="p-aft"><span>AFT (Account Funding Transaction)</span></label></div>
+                <details><summary>What is this?</summary><small>Moves funds from a card to an account or wallet to fund balances securely.</small></details>
+              </div>
+            </div>
+            <div class="product">
+              <input type="checkbox" name="products" value="Credit Cards" id="p-cc">
+              <div class="p-meta"><div class="p-title"><label for="p-cc"><span>Credit Cards</span></label></div>
+                <details><summary>What is this?</summary><small>Use bank-issued cards to fund accounts or make payments globally.</small></details>
+              </div>
+            </div>
+            <div class="product">
+              <input type="checkbox" name="products" value="Wire" id="p-wire-in">
+              <div class="p-meta"><div class="p-title"><label for="p-wire-in"><span>Wire Transfers</span></label></div>
+                <details><summary>What is this?</summary><small>Direct bank-to-bank transfers for larger or B2B payments.</small></details>
+              </div>
+            </div>
+            <div class="product">
+              <input type="checkbox" name="products" value="ACH" id="p-ach">
+              <div class="p-meta"><div class="p-title"><label for="p-ach"><span>ACH (Automated Clearing House)</span></label></div>
+                <details><summary>What is this?</summary><small>U.S. low-cost electronic bank-to-bank transfers; great for recurring payments.</small></details>
+              </div>
+            </div>
+            <div class="product">
+              <input type="checkbox" name="products" value="Visa Direct to Card - Domestic" id="p-vdd">
+              <div class="p-meta"><div class="p-title"><label for="p-vdd"><span>Visa Direct to Card – Domestic</span></label></div>
+                <details><summary>What is this?</summary><small>Instant push-to-card within the same country.</small></details>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payout -->
+          <div class="tabpanel" id="panel-payout" role="region" aria-label="Payout Methods">
+            <div class="product"><input type="checkbox" name="products" value="Domestic Wire" id="p-wire-dom">
+              <div class="p-meta"><div class="p-title"><label for="p-wire-dom"><span>Domestic Wire</span></label></div>
+                <details><summary>What is this?</summary><small>Send payouts to local bank accounts via same-country wire.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="International Wire (SWIFT)" id="p-swift">
+              <div class="p-meta"><div class="p-title"><label for="p-swift"><span>International Wire (SWIFT)</span></label></div>
+                <details><summary>What is this?</summary><small>Cross-border transfers via the SWIFT network in multiple currencies.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Push to Account" id="p-pta">
+              <div class="p-meta"><div class="p-title"><label for="p-pta"><span>Push to Account</span></label></div>
+                <details><summary>What is this?</summary><small>Send funds directly to a recipient’s bank account.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Push to Card - Cross-Border" id="p-ptc">
+              <div class="p-meta"><div class="p-title"><label for="p-ptc"><span>Push to Card – Cross-Border</span></label></div>
+                <details><summary>What is this?</summary><small>International card payouts (e.g., OCT) to cards abroad.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Push to Wallet" id="p-ptw">
+              <div class="p-meta"><div class="p-title"><label for="p-ptw"><span>Push to Wallet</span></label></div>
+                <details><summary>What is this?</summary><small>Deliver funds to mobile/digital wallets in supported regions.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Inyo Network Account" id="p-ina">
+              <div class="p-meta"><div class="p-title"><label for="p-ina"><span>Inyo Network Account</span></label></div>
+                <details><summary>What is this?</summary><small>Receive payouts into an Inyo account; keep funds in-ecosystem.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Cash" id="p-cash">
+              <div class="p-meta"><div class="p-title"><label for="p-cash"><span>Cash</span></label></div>
+                <details><summary>What is this?</summary><small>Cash pickup via partner locations (corridor-dependent).</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Wallet" id="p-wallet">
+              <div class="p-meta"><div class="p-title"><label for="p-wallet"><span>Wallet</span></label></div>
+                <details><summary>What is this?</summary><small>Pay into mobile/digital wallets used in many regions.</small></details>
+              </div>
+            </div>
+            <div class="product"><input type="checkbox" name="products" value="Debit Cards" id="p-debit-out">
+              <div class="p-meta"><div class="p-title"><label for="p-debit-out"><span>Debit Cards (Payout)</span></label></div>
+                <details><summary>What is this?</summary><small>Payouts directly to recipients’ cards for convenience.</small></details>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Company info in separate fields + Comments -->
+        <h3 style="margin:0 0 6px 0;font-size:16px;color:#2f2b88;">Company Information & Operations</h3>
+        <div class="row">
+          <div>
+            <label for="business_model">Briefly describe your core business model</label>
+            <textarea id="business_model" name="business_model"></textarea>
+          </div>
+          <div>
+            <label for="wallets_funded">How are wallets/accounts funded?</label>
+            <textarea id="wallets_funded" name="wallets_funded"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="funds_flow">Explain the full funds flow (with counterparties)</label>
+            <textarea id="funds_flow" name="funds_flow"></textarea>
+          </div>
+          <div>
+            <label for="avg_ticket">Average ticket</label>
+            <input id="avg_ticket" name="avg_ticket" type="text" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="monthly_volume">Monthly transaction volume</label>
+            <input id="monthly_volume" name="monthly_volume" type="text" />
+          </div>
+          <div>
+            <label for="send_countries">Main sending countries</label>
+            <input id="send_countries" name="send_countries" type="text" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="receive_countries">Main receiving countries</label>
+            <input id="receive_countries" name="receive_countries" type="text" />
+          </div>
+          <div>
+            <label for="partners">Current partners/providers (banks, PSPs, processors)</label>
+            <input id="partners" name="partners" type="text" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="corridor_restrictions">Any restrictions in corridors (US, Canada, Nigeria, Ghana)?</label>
+            <input id="corridor_restrictions" name="corridor_restrictions" type="text" />
+          </div>
+          <div>
+            <label for="settlement_currency">Preferred settlement currency</label>
+            <input id="settlement_currency" name="settlement_currency" type="text" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="settlement_frequency">Settlement frequency (daily, weekly, etc.)</label>
+            <input id="settlement_frequency" name="settlement_frequency" type="text" />
+          </div>
+          <div>
+            <label for="ops_requirements">Any special operational requirements or constraints?</label>
+            <input id="ops_requirements" name="ops_requirements" type="text" />
+          </div>
+        </div>
+
+        <!-- NEW: Comments section -->
+        <div class="divider"></div>
+        <h3 style="margin:0 0 6px 0;font-size:16px;color:#2f2b88;">Comments / Questions</h3>
+        <textarea id="comments" name="comments" placeholder="Ask us anything or add context here…"></textarea>
+
+        <!-- Hidden meta fields for Formspree -->
+        <input type="hidden" name="_subject" value="New Inyo Intake" />
+        <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" />
+
+        <div class="error" id="errorBox">Please enter your name and select at least one product.</div>
+
+        <div class="actions">
+          <button class="primary" id="btnReview" type="button">Review & Confirm</button>
+          <button class="ghost" type="reset">Reset</button>
+        </div>
+      </form>
+
+      <footer>© Inyo Global — All rights reserved.</footer>
+    </div>
+
+    <!-- Thank You screen (shown after successful send) -->
+    <div class="thankyou" id="thankYou">
+      <div class="ty-card">
+        <span class="badge">Thank you</span>
+        <h2 style="margin:6px 0 4px 0;">Your intake was submitted to Inyo.</h2>
+        <p style="color:#475467">We’ll review and get back to you shortly. If you believe anything was incorrect, feel free to submit a new form at any time.</p>
+        <div class="divider"></div>
+        <div id="thankYouSummary"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div class="modal-backdrop" id="reviewBackdrop" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+    <div class="modal">
+      <header><h3 id="reviewTitle" style="margin:0">Please confirm your details</h3></header>
+      <div class="content">
+        <p style="margin:0 0 10px 0;color:#475467">Check your selections and answers below. If anything is wrong, close and edit; otherwise click <b>Confirm & Send</b>.</p>
+        <div class="summary-grid" id="summaryGrid"></div>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="btnEdit" type="button">Edit</button>
+        <button class="primary" id="btnConfirm" type="button">Confirm & Send</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Tabs
+  const tabs = document.querySelectorAll('.tabbar button');
+  const panels = { payin: document.getElementById('panel-payin'), payout: document.getElementById('panel-payout') };
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.values(panels).forEach(p=>p.classList.remove('active'));
+      panels[btn.dataset.tab].classList.add('active');
+    });
+  });
+
+  // Elements
+  const form = document.getElementById('intakeForm');
+  const errorBox = document.getElementById('errorBox');
+  const reviewBackdrop = document.getElementById('reviewBackdrop');
+  const summaryGrid = document.getElementById('summaryGrid');
+  const btnReview = document.getElementById('btnReview');
+  const btnEdit = document.getElementById('btnEdit');
+  const btnConfirm = document.getElementById('btnConfirm');
+  const thankYou = document.getElementById('thankYou');
+  const formCard = document.getElementById('formCard');
+  const thankYouSummary = document.getElementById('thankYouSummary');
+
+  // Helper: gather selected products
+  function selectedProducts(){
+    return Array.from(document.querySelectorAll('input[name="products"]:checked')).map(x=>x.value);
+  }
+
+  // Build summary blocks
+  function buildSummary(){
+    const data = {
+      'Legal Name': document.getElementById('company').value.trim(),
+      'Email': document.getElementById('email').value.trim(),
+      'Products Selected': selectedProducts().join(', ') || '—',
+      'Business model': document.getElementById('business_model').value.trim() || '—',
+      'Wallets/accounts funded': document.getElementById('wallets_funded').value.trim() || '—',
+      'Funds flow': document.getElementById('funds_flow').value.trim() || '—',
+      'Average ticket': document.getElementById('avg_ticket').value.trim() || '—',
+      'Monthly volume': document.getElementById('monthly_volume').value.trim() || '—',
+      'Sending countries': document.getElementById('send_countries').value.trim() || '—',
+      'Receiving countries': document.getElementById('receive_countries').value.trim() || '—',
+      'Partners/providers': document.getElementById('partners').value.trim() || '—',
+      'Corridor restrictions': document.getElementById('corridor_restrictions').value.trim() || '—',
+      'Settlement currency': document.getElementById('settlement_currency').value.trim() || '—',
+      'Settlement frequency': document.getElementById('settlement_frequency').value.trim() || '—',
+      'Operational reqs': document.getElementById('ops_requirements').value.trim() || '—',
+      'Comments / Questions': document.getElementById('comments').value.trim() || '—'
+    };
+    return data;
+  }
+
+  function renderSummary(container, data){
+    container.innerHTML = '';
+    Object.entries(data).forEach(([k,v])=>{
+      const div = document.createElement('div');
+      div.className = 'summary-item';
+      div.innerHTML = `<b>${k}</b><div>${v.replace?.(/\n/g,'<br>') || v}</div>`;
+      container.appendChild(div);
+    });
+  }
+
+  // Review flow
+  btnReview.addEventListener('click', ()=>{
+    const nameOk = document.getElementById('company').value.trim().length > 1;
+    const anyProduct = selectedProducts().length > 0;
+    if(!nameOk || !anyProduct){
+      errorBox.style.display = 'block';
+      return;
+    }
+    errorBox.style.display = 'none';
+    const data = buildSummary();
+    renderSummary(summaryGrid, data);
+    reviewBackdrop.style.display = 'flex';
+  });
+
+  btnEdit.addEventListener('click', ()=>{ reviewBackdrop.style.display = 'none'; });
+
+  // Confirm & Send (POST via fetch to Formspree, then show Thank You screen with summary)
+  btnConfirm.addEventListener('click', async ()=>{
+    const endpoint = "https://formspree.io/f/mzzjjppa";
+    const fd = new FormData(form);
+
+    // dynamic subject line
+    const chosen = selectedProducts().join(', ');
+    fd.set('_subject', `New Inyo Intake – ${document.getElementById('company').value} – ${chosen}`);
+
+    try{
+      const res = await fetch(endpoint, { method:'POST', body: fd, headers:{ 'Accept':'application/json' }});
+      // Build Thank You view either way; if error we note it
+      const data = buildSummary();
+      renderSummary(thankYouSummary, data);
+      formCard.style.display = 'none';
+      thankYou.style.display = 'block';
+      reviewBackdrop.style.display = 'none';
+
+      if(!res.ok){
+        const p = document.createElement('p');
+        p.style.color = '#b42318';
+        p.style.marginTop = '10px';
+        p.textContent = "We submitted your info, but the email service responded with a warning. If you don't see a confirmation email, you can submit again.";
+        thankYouSummary.appendChild(p);
+      }
+    }catch(e){
+      // Network failure fallback
+      reviewBackdrop.style.display = 'none';
+      alert("Network error while sending. You can try again, or refresh the page.");
+    }
+  });
+
+  // Reset hides error and thank-you (if user reloads)
+  form.addEventListener('reset', ()=>{
+    errorBox.style.display = 'none';
+  });
+</script>
+</body>
+</html>
